@@ -18,7 +18,7 @@ export default async function RootLayout({
 
   return (
     <html>
-      <body className="bg-sky-100">
+      <body>
         <SessionProvider session={session}>
           <AntdRegistry>
             {children}
