@@ -67,7 +67,7 @@ export default function Index() {
       let conn: any;
       const initSock = async () => {
         const session:any = await fetchSession();
-        conn = io(process.env.SOCKET_URL || 'https://be-vhiobot.bagusgandhi.web.id', {
+        conn = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
           extraHeaders: {
             room: session?.user?.uuid,
             name: session?.user?.name,

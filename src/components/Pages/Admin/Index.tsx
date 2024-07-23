@@ -140,7 +140,7 @@ export default function Index() {
   ); // Empty dependency array means this will only run once
 
   useEffect(() => {
-    const conn = io(process.env.SOCKET_URL!);
+    const conn = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
     // init socket conn
     dispatch({
       type: 'set socketConn',
