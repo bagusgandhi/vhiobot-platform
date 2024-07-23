@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  vhiobot-platform:
+    container_name: vhiobot-platform
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    env_file:
+      - .env.local
