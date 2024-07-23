@@ -67,7 +67,7 @@ export default function Index() {
       let conn: any;
       const initSock = async () => {
         const session:any = await fetchSession();
-        conn = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3009', {
+        conn = io(process.env.SOCKET_URL || 'http://localhost:3009', {
           extraHeaders: {
             room: session?.user?.uuid,
             name: session?.user?.name,
