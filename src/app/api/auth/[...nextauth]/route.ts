@@ -51,6 +51,7 @@ const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
+      checks: ['none']
       // clientId: GOOGLE_CLIENT_ID,
       // clientSecret: GOOGLE_SECRET,
     }),
