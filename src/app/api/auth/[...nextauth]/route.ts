@@ -4,7 +4,6 @@ import GoogleProvider from 'next-auth/providers/google';
 import { Env } from '@/common/env';
 import VhiobotApiService from '@/services/vhiobot-api.service';
 
-const { GOOGLE_CLIENT_ID, GOOGLE_SECRET, SECRET_API_KEY } = Env;
 
 const authOptions = {
   trustHost: true,
@@ -51,9 +50,6 @@ const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
-      checks: ['none']
-      // clientId: GOOGLE_CLIENT_ID,
-      // clientSecret: GOOGLE_SECRET,
     }),
   ],
   callbacks: {
@@ -95,8 +91,8 @@ const authOptions = {
       }
     },
     async session({ session, token, user }: any) {
-      session.user.name = token.account.response.name;
-      session.user.email = token.account.response.email;
+      session.user.name = token.account.response.name ?? token.account.response.profile.name;
+      session.user.email = token.account.response.email ?? token.account.response.profile.email;
       session.user.uuid = token.account.response.uuid;
       session.user.role = token.account.response.role;
       session.access_token = token.account.response.access_token;
