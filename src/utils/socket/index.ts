@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 
 // const { SOCKET_URL } = Env;
 
-const socket = (room: string, name: string) => io('http://localhost:3009', {
+const socket = (room: string, name: string) => io(process.env.SOCKET_URL!, {
     extraHeaders: {
         room,
         name
