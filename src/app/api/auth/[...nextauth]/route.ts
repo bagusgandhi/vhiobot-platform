@@ -49,8 +49,10 @@ const authOptions = {
       },
     }),
     GoogleProvider({
-      clientId: GOOGLE_CLIENT_ID,
-      clientSecret: GOOGLE_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_SECRET!,
+      // clientId: GOOGLE_CLIENT_ID,
+      // clientSecret: GOOGLE_SECRET,
     }),
   ],
   callbacks: {
@@ -62,7 +64,7 @@ const authOptions = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'api-key': `${SECRET_API_KEY}`,
+            'api-key': `${process.env.SECRET_API_KEY}`,
           },
           data: {
             email: profile.email,
