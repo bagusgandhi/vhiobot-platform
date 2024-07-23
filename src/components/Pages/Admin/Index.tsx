@@ -47,16 +47,7 @@ export default function Index() {
       y: item.conversation,
     }));
 
-    const seriesData = [
-      {
-        name: 'Active User',
-        data: activeUserData,
-      },
-      {
-        name: 'Conversation',
-        data: conversationData,
-      },
-    ];
+    const seriesData = [activeUserData, conversationData];
 
     const totalActiveUsers = data?.data.reduce(
       (acc: number, cur: any) => acc + cur.activeUser,
@@ -83,61 +74,53 @@ export default function Index() {
     });
   };
 
-  const options: any = useMemo(
-    () => ({
-      chart: {
-        id: 'realtime',
-        foreColor: '#fff',
-        animations: {
-          enabled: true,
-          easing: 'linear',
-          dynamicAnimation: {
-            speed: 1000,
-          },
-        },
-        toolbar: {
-          show: false,
-        },
-        zoom: {
-          enabled: false,
+  const optionsSeries: any = {
+    chart: {
+      id: 'realtime',
+      foreColor: '#fff',
+      animations: {
+        enabled: true,
+        easing: 'linear',
+        dynamicAnimation: {
+          speed: 1000,
         },
       },
-      dataLabels: {
+      toolbar: {
+        show: false,
+      },
+      zoom: {
         enabled: false,
       },
-      colors: ['#FF0080', '#00f7ff'],
-      stroke: {
-        curve: 'stepline',
-      },
-      xaxis: {
-        type: 'datetime',
-        tickAmount: 10,
-        labels: {
-          datetimeUTC: false, // Display dates in local time
-          formatter: function (value: number) {
-            console.log('options', state.dateStart);
-            return moment(value).format('HH:mm:ss');
-          },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    colors: ['#FF0080', '#00f7ff'],
+    stroke: {
+      curve: 'stepline',
+    },
+    xaxis: {
+      type: 'datetime',
+      tickAmount: 10,
+      labels: {
+        datetimeUTC: false, // Display dates in local time
+        formatter: function (value: number) {
+          return moment(value).format('HH:mm:ss');
         },
       },
-      yaxis: {
-        stepSize: 1,
-        floating: false,
-        min: 0,
-      },
-      tooltip: {
-        x: {
-          formatter: function (value: number) {
-            return moment(value).format('YYYY-MM-DD HH:mm:ss');
-          },
-        },
-      },
-      markers: {
-        size: 0,
-      },
-    }),
-    [state.dateStart],
-  ); // Empty dependency array means this will only run once
+    },
+    yaxis: {
+      stepSize: 1,
+      floating: false,
+      min: 0,
+    },
+    tooltip: {
+      enabled: false
+    },
+    markers: {
+      size: 0,
+    },
+  }; // Empty dependency array means this will only run once
 
   useEffect(() => {
     const conn = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
@@ -156,7 +139,7 @@ export default function Index() {
 
   const handleActiveUser = (msg: any) => {
     dispatch({
-      type: 'push series',
+      type: 'push seriesActiveUser',
       payload: msg[0],
     });
 
@@ -210,6 +193,8 @@ export default function Index() {
                   }}
                 />
                 <DatePicker.RangePicker
+                  placement="topRight"
+                  size='small'
                   picker={picketMap[state.selectedPeriod]}
                   onCalendarChange={(value: any) => {
                     if (value && value[0]) {
@@ -246,9 +231,6 @@ export default function Index() {
                   }}
                   onChange={async (value: any[]) => {
                     if (value) {
-                      console.log(value[0].format('YYYY-MM-DD'));
-                      console.log(value[1].format('YYYY-MM-DD'));
-
                       dispatch({
                         type: 'set dateStart',
                         payload: value[0].format('YYYY-MM-DD'),
@@ -300,13 +282,7 @@ export default function Index() {
                       });
 
                       dispatch({
-                        type: 'set series',
-                        payload: [
-                          {
-                            name: 'Active User',
-                            data: [],
-                          },
-                        ],
+                        type: 'reset seriesActiveUser',
                       });
                     }
                     // }
@@ -314,19 +290,66 @@ export default function Index() {
                 />
               </div>
             </div>
-            <ReactApexChart
-              options={options}
-              series={state.series}
-              type="line"
-              width={'100%'}
-              height={400}
-            />
+            {state.dateStart ? (
+              <ReactApexChart
+                options={{
+                  ...optionsSeries,
+                  ...{
+                    xaxis: {
+                      type: 'datetime',
+                      labels: {
+                        datetimeUTC: false, // Display dates in local time
+                        formatter: function (value: number) {
+                          return moment(value).format('YYYY-MM-DD');
+                        },
+                      },
+                    },
+                    tooltip: {
+                      enabled: true,
+                      x: {
+                        formatter: function (value: number) {
+                          return moment(value).format('YYYY-MM-DD');
+                        },
+                      },
+                    },
+                  },
+                }}
+                series={[
+                  {
+                    name: 'Active User',
+                    data: [...state.seriesActiveUser],
+                  },
+                  {
+                    name: 'Conversation',
+                    data: [...state.seriesConversation],
+                  },
+                ]}
+                type="line"
+                width={'100%'}
+                height={400}
+              />
+            ) : (
+              <ReactApexChart
+                options={optionsSeries}
+                series={[
+                  {
+                    name: 'Active User',
+                    data: [...state.seriesActiveUser],
+                  },
+                ]}
+                type="line"
+                width={'100%'}
+                height={400}
+              />
+            )}
           </Card>
         </div>
         <div className="flex flex-col gap-6 w-1/3">
           <Card style={{ background: '#fff' }}>
             <div className="flex gap-2">
-              <p className="font-semibold">Total User Chat {state.dateStart ? '' : 'Today'}</p>
+              <p className="font-semibold">
+                Total User Chat {state.dateStart ? '' : 'Today'}
+              </p>
               <Tooltip
                 placement="top"
                 title={'This is total user chat'}
@@ -341,7 +364,9 @@ export default function Index() {
           </Card>
           <Card style={{ background: '#fff' }}>
             <div className="flex gap-2">
-              <p className="font-semibold">Total Conversation {state.dateStart ? '' : 'Today'}</p>
+              <p className="font-semibold">
+                Total Conversation {state.dateStart ? '' : 'Today'}
+              </p>
               <Tooltip
                 placement="top"
                 title={
@@ -363,7 +388,8 @@ export default function Index() {
 }
 
 interface initialStateType {
-  series: any;
+  seriesActiveUser: any;
+  seriesConversation: any;
   totalUserDaily: Number;
   totalConversation: Number;
   socketConn: Socket | null;
@@ -375,12 +401,8 @@ interface initialStateType {
 }
 
 const initialState: initialStateType = {
-  series: [
-    {
-      name: 'Active User',
-      data: [],
-    },
-  ],
+  seriesActiveUser: [],
+  seriesConversation: [],
   totalUserDaily: 0,
   totalConversation: 0,
   socketConn: null,
@@ -394,14 +416,18 @@ const initialState: initialStateType = {
 function stateReducer(draft: any, action: any) {
   switch (action.type) {
     case 'set series':
-      draft.series = action.payload;
+      draft.seriesActiveUser = action.payload[0];
+      draft.seriesConversation = action.payload[1];
       break;
-    case 'push series':
+    case 'reset seriesActiveUser':
+      draft.seriesActiveUser = [];
+      break;
+    case 'push seriesActiveUser':
       const newDataPoint = action.payload;
-      if (draft.series[0].data.length >= 10) {
-        draft.series[0].data.shift();
+      if (draft.seriesActiveUser.length >= 10) {
+        draft.seriesActiveUser.shift();
       }
-      draft.series[0].data.push(newDataPoint);
+      draft.seriesActiveUser = [...draft.seriesActiveUser, newDataPoint];
       break;
     case 'set socketConn':
       draft.socketConn = action.payload;
