@@ -9,11 +9,12 @@ export default class VhiobotApiService {
   constructor(
     config: {
       /**
-       * Access token for request to Widya API Apps Host. This access token will be used in every request to Widya API Apps Host
+       * Access token for request to the API. This access token will be used in every request to API
        */ accessToken?: string;
     } = {}
   ) {
     this.accessToken = config.accessToken;
+    // console.log(config.accessToken)
   }
 
   /**
@@ -55,12 +56,13 @@ export default class VhiobotApiService {
       method?: Method;
       headers?: Record<string, any>;
       data?: any;
+      params?: any;
     } = {}
   ) {
     return await axios.request({
       baseURL: Env.VHIOBOT_API_HOST,
       url: url,
-      params: '',
+      params: config?.params,
       method: config?.method ?? 'GET',
       headers: {
         'Content-Type': 'application/json',
