@@ -41,16 +41,9 @@ export default function Index() {
 
   const onSubmit: SubmitHandler<Inputs> = async ({ message }) => {
     const fetchedSession: any = await fetchSession();
-
-    if (fetchedSession) {
-      socket(fetchedSession.user.uuid, fetchedSession.user.name).emit(
-        'sendMessage',
-        message,
-      );
-      socket(fetchedSession.user.uuid, fetchedSession.user.name).emit(
-        'askBot',
-        message,
-      );
+    if (fetchedSession && socketConn) {
+        socketConn.emit('sendMessage', message);
+        socketConn.emit('askBot', message);
       reset();
     }
   };
