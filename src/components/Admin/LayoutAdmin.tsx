@@ -55,7 +55,7 @@ export default function LayoutAdmin({ children }: { children: React.ReactNode })
     >
       <Layout style={{ minHeight: "100vh" }}>
         <Sider
-          // collapsible
+          collapsible
           collapsed={collapsed}
           onCollapse={(value) => setCollapsed(value)}
           theme='light'
@@ -70,7 +70,7 @@ export default function LayoutAdmin({ children }: { children: React.ReactNode })
             bottom: 0,
           }}
         >
-          <div className="bg-gray-100 rounded-md m-2" ><p className='w-full text-xl font-bold py-2 text-center text-primary'>Vhiobot</p></div>
+          <div className="lg:bg-gray-100 rounded-md lg:m-2" ><p className='w-full lg:text-xl font-bold lg:py-2 text-center text-primary lg:m-2 my-2'>Vhiobot</p></div>
           <Menu style={{ background: '#ffffff', borderRight: '0px', }} theme="light" defaultSelectedKeys={[pathname]} mode="inline" items={items} />
         </Sider>
         <Layout style={{ background: '#f9f9f9' }}>
@@ -85,7 +85,7 @@ export default function LayoutAdmin({ children }: { children: React.ReactNode })
               </div>
             </div>
           </Header>
-          <Content style={{ marginLeft: '220px'}} >
+          <Content style={{ marginLeft: `${collapsed ? 80 : 200}px`}} >
             <div className='px-4 flex flex-col'>
             {children}
             </div>
