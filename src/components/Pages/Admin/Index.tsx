@@ -1,6 +1,15 @@
 'use client';
 import React, { useEffect, useMemo } from 'react';
-import { Typography, Divider, Card, DatePicker, Tooltip, Select } from 'antd';
+import {
+  Typography,
+  Divider,
+  Card,
+  DatePicker,
+  Tooltip,
+  Select,
+  Spin,
+  Skeleton,
+} from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 const { Title } = Typography;
@@ -115,7 +124,7 @@ export default function Index() {
       min: 0,
     },
     tooltip: {
-      enabled: false
+      enabled: false,
     },
     markers: {
       size: 0,
@@ -157,6 +166,10 @@ export default function Index() {
   useEffect(() => {
     if (state.socketConn) {
       state.socketConn.on('activeUser', handleActiveUser);
+      dispatch({
+        type: 'set loading',
+        payload: false,
+      });
     }
 
     return () => {
@@ -171,215 +184,229 @@ export default function Index() {
     <div>
       <Title level={4}>Dashboard</Title>
       <Divider />
-      <div className="flex gap-6">
-        <div className="w-2/3">
-          <Card style={{ background: '#4942E4' }}>
-            <div className="flex justify-between">
-              <p className="font-semibold text-white">
-                {state.dateStart
-                  ? `Graph Data from ${state.dateStart} to ${state.dateEnd}`
-                  : 'Realtime Active User'}
-              </p>
-              <div className="flex gap-4">
-                <Select
-                  options={optionsPeriod}
-                  style={{ width: 100 }}
-                  defaultValue={state.selectedPeriod}
-                  onChange={(value) => {
-                    dispatch({
-                      type: 'set selectedPeriod',
-                      payload: value,
-                    });
-                  }}
-                />
-                <DatePicker.RangePicker
-                  placement="topRight"
-                  size='small'
-                  picker={picketMap[state.selectedPeriod]}
-                  onCalendarChange={(value: any) => {
-                    if (value && value[0]) {
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="lg:w-2/3  w-full">
+          <Spin spinning={state.loading || isLoading}>
+            <Card style={{ background: '#4942E4', height: 500 }}>
+              <div className="flex flex-col lg:flex-row gap-4 lg:justify-between">
+                <p className="font-semibold text-white">
+                  {state.dateStart
+                    ? `Graph Data from ${state.dateStart} to ${state.dateEnd}`
+                    : 'Realtime Active User'}
+                </p>
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <Select
+                    options={optionsPeriod}
+                    defaultValue={state.selectedPeriod}
+                    onChange={(value) => {
                       dispatch({
-                        type: 'set stardateChecked',
-                        payload: value[0].format('YYYY-MM-DD'),
+                        type: 'set selectedPeriod',
+                        payload: value,
                       });
-                    } else {
-                      dispatch({
-                        type: 'set stardateChecked',
-                        payload: undefined,
-                      });
-                    }
-                  }}
-                  disabledDate={(current) => {
-                    if (
-                      state.stardateChecked &&
-                      state.selectedPeriod === 'daily'
-                    ) {
-                      // Disable dates more than 60 days before the start date
-                      const isBeforeLimit =
-                        current &&
-                        current <
-                          moment(state.stardateChecked)
-                            .subtract(60, 'days')
-                            .startOf('day');
-                      // Disable dates after today
-                      const isAfterToday =
-                        current && current > moment().endOf('day');
-                      return isBeforeLimit || isAfterToday;
-                    }
+                    }}
+                  />
+                  <DatePicker.RangePicker
+                    placement="topRight"
+                    picker={picketMap[state.selectedPeriod]}
+                    onCalendarChange={(value: any) => {
+                      if (value && value[0]) {
+                        dispatch({
+                          type: 'set stardateChecked',
+                          payload: value[0].format('YYYY-MM-DD'),
+                        });
+                      } else {
+                        dispatch({
+                          type: 'set stardateChecked',
+                          payload: undefined,
+                        });
+                      }
+                    }}
+                    disabledDate={(current) => {
+                      if (
+                        state.stardateChecked &&
+                        state.selectedPeriod === 'daily'
+                      ) {
+                        // Disable dates more than 60 days before the start date
+                        const isBeforeLimit =
+                          current &&
+                          current <
+                            moment(state.stardateChecked)
+                              .subtract(60, 'days')
+                              .startOf('day');
+                        // Disable dates after today
+                        const isAfterToday =
+                          current && current > moment().endOf('day');
+                        return isBeforeLimit || isAfterToday;
+                      }
 
-                    return current && current > moment().endOf('day');
-                  }}
-                  onChange={async (value: any[]) => {
-                    if (value) {
-                      dispatch({
-                        type: 'set dateStart',
-                        payload: value[0].format('YYYY-MM-DD'),
-                      });
+                      return current && current > moment().endOf('day');
+                    }}
+                    onChange={async (value: any[]) => {
+                      if (value) {
+                        dispatch({
+                          type: 'set dateStart',
+                          payload: value[0].format('YYYY-MM-DD'),
+                        });
 
-                      dispatch({
-                        type: 'set dateEnd',
-                        payload: value[1].format('YYYY-MM-DD'),
-                      });
+                        dispatch({
+                          type: 'set dateEnd',
+                          payload: value[1].format('YYYY-MM-DD'),
+                        });
 
-                      state.socketConn?.off('activeUser');
+                        state.socketConn?.off('activeUser');
+                        state.socketConn?.disconnect();
 
-                      const params: any = {
-                        params: {
-                          dateStart:
-                            state.selectedPeriod === 'monthly'
-                              ? value[0].startOf('month').format('YYYY-MM-DD')
-                              : value[0].format('YYYY-MM-DD'),
-                          dateEnd:
-                            state.selectedPeriod === 'monthly'
-                              ? value[1].endOf('month').format('YYYY-MM-DD')
-                              : value[1].format('YYYY-MM-DD'),
-                          period: state.selectedPeriod,
-                        },
-                      };
-                      await handlerGetAnalytics(params);
-                    } else {
-                      // if(state.socketConn){
-                      state.socketConn?.on('activeUser', handleActiveUser);
+                        const params: any = {
+                          params: {
+                            dateStart:
+                              state.selectedPeriod === 'monthly'
+                                ? value[0].startOf('month').format('YYYY-MM-DD')
+                                : value[0].format('YYYY-MM-DD'),
+                            dateEnd:
+                              state.selectedPeriod === 'monthly'
+                                ? value[1].endOf('month').format('YYYY-MM-DD')
+                                : value[1].format('YYYY-MM-DD'),
+                            period: state.selectedPeriod,
+                          },
+                        };
+                        await handlerGetAnalytics(params);
+                      } else {
+                        dispatch({
+                          type: 'set loading',
+                          payload: true,
+                        });
+                        state.socketConn?.connect();
+                        state.socketConn?.on('activeUser', handleActiveUser);
 
-                      dispatch({
-                        type: 'set totalUserDaily',
-                        payload: 0,
-                      });
+                        dispatch({
+                          type: 'set totalUserDaily',
+                          payload: 0,
+                        });
 
-                      dispatch({
-                        type: 'set totalConversation',
-                        payload: 0,
-                      });
+                        dispatch({
+                          type: 'set totalConversation',
+                          payload: 0,
+                        });
 
-                      dispatch({
-                        type: 'set dateStart',
-                        payload: undefined,
-                      });
+                        dispatch({
+                          type: 'set dateStart',
+                          payload: undefined,
+                        });
 
-                      dispatch({
-                        type: 'set dateEnd',
-                        payload: undefined,
-                      });
+                        dispatch({
+                          type: 'set dateEnd',
+                          payload: undefined,
+                        });
 
-                      dispatch({
-                        type: 'reset seriesActiveUser',
-                      });
-                    }
-                    // }
-                  }}
-                />
+                        dispatch({
+                          type: 'reset seriesActiveUser',
+                        });
+
+                        dispatch({
+                          type: 'set loading',
+                          payload: false,
+                        });
+                      }
+                      // }
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-            {state.dateStart ? (
-              <ReactApexChart
-                options={{
-                  ...optionsSeries,
-                  ...{
-                    xaxis: {
-                      type: 'datetime',
-                      labels: {
-                        datetimeUTC: false, // Display dates in local time
-                        formatter: function (value: number) {
-                          return moment(value).format('YYYY-MM-DD');
+              {state.dateStart ? (
+                <ReactApexChart
+                  options={{
+                    ...optionsSeries,
+                    ...{
+                      xaxis: {
+                        type: 'datetime',
+                        labels: {
+                          datetimeUTC: false, // Display dates in local time
+                          formatter: function (value: number) {
+                            return moment(value).format('YYYY-MM-DD');
+                          },
+                        },
+                      },
+                      tooltip: {
+                        enabled: true,
+                        x: {
+                          formatter: function (value: number) {
+                            return moment(value).format('YYYY-MM-DD');
+                          },
                         },
                       },
                     },
-                    tooltip: {
-                      enabled: true,
-                      x: {
-                        formatter: function (value: number) {
-                          return moment(value).format('YYYY-MM-DD');
-                        },
-                      },
+                  }}
+                  series={[
+                    {
+                      name: 'Active User',
+                      data: [...state.seriesActiveUser],
                     },
-                  },
-                }}
-                series={[
-                  {
-                    name: 'Active User',
-                    data: [...state.seriesActiveUser],
-                  },
-                  {
-                    name: 'Conversation',
-                    data: [...state.seriesConversation],
-                  },
-                ]}
-                type="line"
-                width={'100%'}
-                height={400}
-              />
-            ) : (
-              <ReactApexChart
-                options={optionsSeries}
-                series={[
-                  {
-                    name: 'Active User',
-                    data: [...state.seriesActiveUser],
-                  },
-                ]}
-                type="line"
-                width={'100%'}
-                height={400}
-              />
-            )}
-          </Card>
+                    {
+                      name: 'Conversation',
+                      data: [...state.seriesConversation],
+                    },
+                  ]}
+                  type="line"
+                  width={'100%'}
+                  height={400}
+                />
+              ) : (
+                <ReactApexChart
+                  options={optionsSeries}
+                  series={[
+                    {
+                      name: 'Active User',
+                      data: [...state.seriesActiveUser],
+                    },
+                  ]}
+                  type="line"
+                  width={'100%'}
+                  height={400}
+                />
+              )}
+            </Card>
+          </Spin>
         </div>
-        <div className="flex flex-col gap-6 w-1/3">
+        <div className="flex-col gap-6 lg:w-1/3 w-full">
           <Card style={{ background: '#fff' }}>
-            <div className="flex gap-2">
-              <p className="font-semibold">
-                Total User Chat {state.dateStart ? '' : 'Today'}
-              </p>
-              <Tooltip
-                placement="top"
-                title={'This is total user chat'}
-                arrow={true}
-              >
-                <InfoCircleOutlined />
-              </Tooltip>
-            </div>
-            <h3 className="text-3xl text-center py-4 font-semibold">
-              {state.totalUserDaily.toString()}
-            </h3>
+            <Skeleton active loading={state.loading || isLoading}>
+              <div className="flex gap-2">
+                <p className="font-semibold">
+                  Total User Chat {state.dateStart ? '' : 'Today'}
+                </p>
+                <Tooltip
+                  placement="top"
+                  title={'This is total user chat'}
+                  arrow={true}
+                >
+                  <InfoCircleOutlined />
+                </Tooltip>
+              </div>
+              <h3 className="text-3xl text-center py-4 font-semibold">
+                {state.totalUserDaily.toString()}
+              </h3>
+            </Skeleton>
           </Card>
           <Card style={{ background: '#fff' }}>
-            <div className="flex gap-2">
-              <p className="font-semibold">
-                Total Conversation {state.dateStart ? '' : 'Today'}
-              </p>
-              <Tooltip
-                placement="top"
-                title={
-                  'This is total message that bot has been deliver to user'
-                }
-                arrow={true}
-              >
-                <InfoCircleOutlined />
-              </Tooltip>
-            </div>
-            <h3 className="text-3xl text-center py-4 font-semibold">
-              {state.totalConversation.toString()}
-            </h3>
+            <Skeleton active loading={state.loading || isLoading}>
+              <div className="flex gap-2">
+                <p className="font-semibold">
+                  Total Conversation {state.dateStart ? '' : 'Today'}
+                </p>
+                <Tooltip
+                  placement="top"
+                  title={
+                    'This is total message that bot has been deliver to user'
+                  }
+                  arrow={true}
+                >
+                  <InfoCircleOutlined />
+                </Tooltip>
+              </div>
+              <h3 className="text-3xl text-center py-4 font-semibold">
+                {state.totalConversation.toString()}
+              </h3>
+            </Skeleton>
           </Card>
         </div>
       </div>
@@ -398,6 +425,7 @@ interface initialStateType {
   selectedPeriod: string;
   dateStart?: any;
   dateEnd?: any;
+  loading: boolean;
 }
 
 const initialState: initialStateType = {
@@ -411,6 +439,7 @@ const initialState: initialStateType = {
   selectedPeriod: 'daily',
   dateStart: undefined,
   dateEnd: undefined,
+  loading: true,
 };
 
 function stateReducer(draft: any, action: any) {
@@ -452,6 +481,9 @@ function stateReducer(draft: any, action: any) {
       break;
     case 'set dateEnd':
       draft.dateEnd = action.payload;
+      break;
+    case 'set loading':
+      draft.loading = action.payload;
       break;
   }
 }
