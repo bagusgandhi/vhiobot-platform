@@ -191,7 +191,7 @@ export default function Index() {
               <div className="flex flex-col lg:flex-row gap-4 lg:justify-between">
                 <p className="font-semibold text-white">
                   {state.dateStart
-                    ? `Graph Data from ${state.dateStart} to ${state.dateEnd}`
+                    ? `Graph Data from ${state.selectedPeriod === 'monthly' ? moment(state.dateStart).format('MMMM YYYY') : state.dateStart} to ${state.selectedPeriod === 'monthly' ? moment(state.dateEnd).format('MMMM YYYY') : state.dateEnd}`
                     : 'Realtime Active User'}
                 </p>
                 <div className="flex flex-col lg:flex-row gap-4">
@@ -207,7 +207,6 @@ export default function Index() {
                   />
                   <DatePicker.RangePicker
                     placement="topRight"
-                    value={[state.dateStart, state.dateEnd]}
                     picker={picketMap[state.selectedPeriod]}
                     onCalendarChange={(value: any) => {
                       if (value && value[0]) {
@@ -318,6 +317,10 @@ export default function Index() {
                   options={{
                     ...optionsSeries,
                     ...{
+                      yaxis: {
+                        floating: false,
+                        min: 0,
+                      },
                       xaxis: {
                         type: 'datetime',
                         labels: {
@@ -457,7 +460,7 @@ function stateReducer(draft: any, action: any) {
       if (draft.seriesActiveUser.length >= 10) {
         draft.seriesActiveUser.shift();
       }
-      draft.seriesActiveUser = [...draft.seriesActiveUser, newDataPoint];
+      draft.seriesActiveUser.push(newDataPoint);
       break;
     case 'set socketConn':
       draft.socketConn = action.payload;
