@@ -207,6 +207,7 @@ export default function Index() {
                   />
                   <DatePicker.RangePicker
                     placement="topRight"
+                    value={[state.dateStart, state.dateEnd]}
                     picker={picketMap[state.selectedPeriod]}
                     onCalendarChange={(value: any) => {
                       if (value && value[0]) {
@@ -245,12 +246,12 @@ export default function Index() {
                       if (value) {
                         dispatch({
                           type: 'set dateStart',
-                          payload: value[0].format('YYYY-MM-DD'),
+                          payload: state.selectedPeriod === 'mothly' ? value[0].startOf('month').format('YYYY-MM-DD') : value[0].format('YYYY-MM-DD'),
                         });
 
                         dispatch({
                           type: 'set dateEnd',
-                          payload: value[1].format('YYYY-MM-DD'),
+                          payload: state.selectedPeriod === 'mothly' ? value[1].startOf('month').format('YYYY-MM-DD') :value[1].format('YYYY-MM-DD'),
                         });
 
                         state.socketConn?.off('activeUser');
