@@ -18,7 +18,11 @@ import { useImmerReducer } from 'use-immer';
 import moment from 'moment';
 import { useSWRMutationFetcher } from '@/utils/useSweFetcherMutation';
 
-const ReactApexChart = dynamic(() => import('react-apexcharts'), {
+const ReactApexChartRealtime = dynamic(() => import('react-apexcharts'), {
+  ssr: false,
+});
+
+const ReactApexChartData = dynamic(() => import('react-apexcharts'), {
   ssr: false,
 });
 
@@ -83,7 +87,57 @@ export default function Index() {
     });
   };
 
-  const optionsSeries: any = {
+  const optionsFilterSeries: any = {
+    chart: {
+      id: 'dataChart',
+      foreColor: '#fff',
+      toolbar: {
+        show: false,
+      },
+      zoom: {
+        enabled: false,
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    colors: ['#FF0080', '#00f7ff'],
+    stroke: {
+      width: 3,
+    },
+    markers: {
+      size: 4,
+      colors: ['#fff'],
+      strokeColor: ['#FF0080', '#00f7ff'],
+      strokeWidth: 3,
+    },
+    yaxis: {
+      floating: false,
+      min: 0,
+    },
+    
+    xaxis: {
+      tickAmount: 7,
+      type: 'datetime',
+      labels: {
+        show: true,
+        datetimeUTC: false, // Display dates in local time
+        formatter: function (value: number) {
+          return moment(value).format('YYYY-MM-DD');
+        },
+      },
+    },
+    tooltip: {
+      enabled: true,
+      x: {
+        formatter: function (value: number) {
+          return moment(value).format('YYYY-MM-DD');
+        },
+      },
+    },
+  };
+
+  const optionsRealtime: any = {
     chart: {
       id: 'realtime',
       foreColor: '#fff',
@@ -107,29 +161,29 @@ export default function Index() {
     colors: ['#FF0080', '#00f7ff'],
     stroke: {
       curve: 'stepline',
+      width: 4,
     },
     xaxis: {
       type: 'datetime',
-      tickAmount: 10,
       labels: {
-        datetimeUTC: false, // Display dates in local time
-        formatter: function (value: number) {
-          return moment(value).format('HH:mm:ss');
-        },
+        show: false,
       },
     },
     yaxis: {
-      stepSize: 1,
       floating: false,
       min: 0,
+      forceNiceScale: true,
     },
     tooltip: {
       enabled: false,
     },
     markers: {
       size: 0,
+      colors: ['#fff'],
+      strokeColor: ['#FF0080', '#00f7ff'],
+      strokeWidth: 3,
     },
-  }; // Empty dependency array means this will only run once
+  };
 
   useEffect(() => {
     const conn = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
@@ -191,7 +245,15 @@ export default function Index() {
               <div className="flex flex-col lg:flex-row gap-4 lg:justify-between">
                 <p className="font-semibold text-white">
                   {state.dateStart
-                    ? `Graph Data from ${state.selectedPeriod === 'monthly' ? moment(state.dateStart).format('MMMM YYYY') : state.dateStart} to ${state.selectedPeriod === 'monthly' ? moment(state.dateEnd).format('MMMM YYYY') : state.dateEnd}`
+                    ? `Graph Data from ${
+                        state.selectedPeriod === 'monthly'
+                          ? moment(state.dateStart).format('MMMM YYYY')
+                          : state.dateStart
+                      } to ${
+                        state.selectedPeriod === 'monthly'
+                          ? moment(state.dateEnd).format('MMMM YYYY')
+                          : state.dateEnd
+                      }`
                     : 'Realtime Active User'}
                 </p>
                 <div className="flex flex-col lg:flex-row gap-4">
@@ -245,12 +307,18 @@ export default function Index() {
                       if (value) {
                         dispatch({
                           type: 'set dateStart',
-                          payload: state.selectedPeriod === 'mothly' ? value[0].startOf('month').format('YYYY-MM-DD') : value[0].format('YYYY-MM-DD'),
+                          payload:
+                            state.selectedPeriod === 'mothly'
+                              ? value[0].startOf('month').format('YYYY-MM-DD')
+                              : value[0].format('YYYY-MM-DD'),
                         });
 
                         dispatch({
                           type: 'set dateEnd',
-                          payload: state.selectedPeriod === 'mothly' ? value[1].startOf('month').format('YYYY-MM-DD') :value[1].format('YYYY-MM-DD'),
+                          payload:
+                            state.selectedPeriod === 'mothly'
+                              ? value[1].startOf('month').format('YYYY-MM-DD')
+                              : value[1].format('YYYY-MM-DD'),
                         });
 
                         state.socketConn?.off('activeUser');
@@ -313,33 +381,8 @@ export default function Index() {
                 </div>
               </div>
               {state.dateStart ? (
-                <ReactApexChart
-                  options={{
-                    ...optionsSeries,
-                    ...{
-                      yaxis: {
-                        floating: false,
-                        min: 0,
-                      },
-                      xaxis: {
-                        type: 'datetime',
-                        labels: {
-                          datetimeUTC: false, // Display dates in local time
-                          formatter: function (value: number) {
-                            return moment(value).format('YYYY-MM-DD');
-                          },
-                        },
-                      },
-                      tooltip: {
-                        enabled: true,
-                        x: {
-                          formatter: function (value: number) {
-                            return moment(value).format('YYYY-MM-DD');
-                          },
-                        },
-                      },
-                    },
-                  }}
+                <ReactApexChartData
+                  options={optionsFilterSeries}
                   series={[
                     {
                       name: 'Active User',
@@ -350,13 +393,13 @@ export default function Index() {
                       data: [...state.seriesConversation],
                     },
                   ]}
-                  type="line"
+                  type="area"
                   width={'100%'}
                   height={400}
                 />
               ) : (
-                <ReactApexChart
-                  options={optionsSeries}
+                <ReactApexChartRealtime
+                  options={optionsRealtime}
                   series={[
                     {
                       name: 'Active User',
