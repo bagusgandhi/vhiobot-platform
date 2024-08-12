@@ -2,12 +2,15 @@
 import { Form, Button, Input, notification } from 'antd';
 import { signIn } from 'next-auth/react';
 import React from 'react';
+import { useImmerReducer } from 'use-immer';
 
 export default function index() {
-  // const [form] = Form.useForm();
+  const [state, dispatch] = useImmerReducer(stateReducer, initialState);
 
-  const onFinish = (values: any) => {
-    signIn('cred-email-password', { ...values, callbackUrl: '/admin' })
+  const onFinish = async (values: any) => {
+    dispatch({ type: 'set loading', payload: true });
+    await signIn('cred-email-password', { ...values, callbackUrl: '/admin' })
+    dispatch({ type: 'set loading', payload: false });
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -55,7 +58,7 @@ export default function index() {
           </Form.Item>
 
           <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-            <Button type="primary" htmlType="submit">
+            <Button loading={state.loading} type="primary" htmlType="submit">
               Submit
             </Button>
           </Form.Item>
@@ -63,4 +66,20 @@ export default function index() {
       </div>
     </>
   );
+}
+
+interface initialStateType {
+  loading: boolean;
+}
+
+const initialState: initialStateType = {
+  loading: false,
+};
+
+function stateReducer(draft: any, action: any) {
+  switch (action.type) {
+    case 'set loading':
+      draft.loading = action.payload;
+      break;
+  }
 }
