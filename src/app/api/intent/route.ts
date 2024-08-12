@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     return Response.json({data});
   } catch (error) {
-    // console.log(error)
+    console.log(error)
     return Response.json(
       { error: 'Failed to process the request' },
       { status: 500 },
