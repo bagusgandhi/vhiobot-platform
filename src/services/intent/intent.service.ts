@@ -15,6 +15,15 @@ export default class IntentService {
     return axiosResponse;
   }
 
+  async getAllIntentContext(access_token: string) {
+    const axiosResponse = await this.vhiobotApiService.request(`/intent/context`, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      }
+    });
+    return axiosResponse;
+  }
+
   async getIntentById(access_token: string, intentId: string) {
     const axiosResponse = await this.vhiobotApiService.request(
       `/intent/${intentId}`,
