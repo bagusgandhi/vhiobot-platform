@@ -39,10 +39,15 @@ export default function Index({ session }: any) {
       },
     });
 
+  const uniqueContext = (record: Partial<DataType>): string[] => {
+    return Array.from(new Set([...record?.input_context ?? [], ...record?.output_context ?? []]));
+  }
   interface DataType {
     key: React.Key;
     title: any;
-    date: string;
+    input_context: string[] | null;
+    output_context: string[] | null;
+    created_at: string;
   }
 
   const columns: TableColumnsType<DataType> = [
@@ -54,7 +59,8 @@ export default function Index({ session }: any) {
           <div className="flex flex-col">
             <p className="font-bold">{text}</p>
             <p className="text-xs">
-              {moment(record?.date).format('MMMM D, YYYY h:mm A')}
+              context  : {uniqueContext(record).join(', ')}
+              <br/> {moment(record?.created_at).format('MMMM D, YYYY h:mm A')}
             </p>
           </div>
         </div>
