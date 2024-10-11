@@ -11,6 +11,7 @@ import {
   message,
   notification,
   Skeleton,
+  Select,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -22,12 +23,30 @@ import ButtonSmall from '@/components/Button/ButtonSmall';
 import { useImmerReducer } from 'use-immer';
 import { useSWRMutationFetcher } from '@/utils/useSweFetcherMutation';
 import InputIntent from '@/components/Input/InputIntent';
+import { useSWRFetcher } from '@/utils/useSwrFetcher';
 const { Title } = Typography;
 
 export default function Index({ session }: any) {
   const [state, dispatch] = useImmerReducer(stateReducer, initialState);
   const [messageApi, contextHolder] = message.useMessage();
   const [formIntent] = Form.useForm();
+
+  const {
+    data: dataIntentContext,
+    error,
+    isLoading: isLoadingIntentContext,
+    mutate,
+  } = useSWRFetcher<any>({
+    key: [`api/intent-context`],
+    session
+  });
+
+  const optionsContext = dataIntentContext?.data?.map((item: any) => {
+    return {
+      label: item.title,
+      value: item.title
+    }
+  })
 
   const { trigger: createIntent, isMutating: createLoading } =
     useSWRMutationFetcher({
@@ -47,18 +66,26 @@ export default function Index({ session }: any) {
       },
     });
 
-  const submitHandler = () => {
-    const displayName = formIntent.getFieldValue('displayName');
+  const preventEnterSubmit = (event: any) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+    }
+  };
+
+  const submitHandler = (values: any) => {
     const data: any = {
       data: {
-        displayName,
+        displayName: values.displayName,
         trainingPhrasesParts: state.trainingPhrases,
         messageTexts: state.responseTexts,
+        inputContext: values.inputContext,
+        outputContext: values.outputContext
       },
     };
 
+
     createIntent(data);
-    formIntent.resetFields()
+    formIntent.resetFields();
   };
 
   return (
@@ -66,7 +93,12 @@ export default function Index({ session }: any) {
       {contextHolder}
       <Title level={4}>Create Intent</Title>
       <Divider />
-      <Form layout="vertical" form={formIntent} onFinish={submitHandler}>
+      <Form
+        layout="vertical"
+        form={formIntent}
+        onFinish={submitHandler}
+        onKeyDown={preventEnterSubmit}
+      >
         <div className="flex">
           <Form.Item
             name="displayName"
@@ -97,6 +129,72 @@ export default function Index({ session }: any) {
           </Button>
         </div>
 
+        {/* context */}
+        <div>
+          <div>
+            <div className="flex gap-2 items-center!">
+              <h4 className="text-lg font-semibold">Contexts</h4>
+              <Tooltip
+                placement="top"
+                title={
+                  'Can be used to "remember" parameter values, so they can be passed between intents'
+                }
+                arrow={true}
+              >
+                <InfoCircleOutlined />
+              </Tooltip>
+            </div>
+            <p className="text-xs text-gray-600">
+              contexts are used to manage the flow of conversation by keeping
+              track of the user's input across multiple turns. They act like
+              variables that help the chatbot remember what the user previously
+              said, allowing for more dynamic and context-aware conversations.
+            </p>
+
+            <div className="flex gap-10">
+              <div className="py-4 w-1/2">
+                <div className="flex mb-2 items-center">
+                  <NumberOutlined type="primary" />
+                  <Form.Item
+                    name="inputContext"
+                    className="w-full"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: '100%' }}
+                      placeholder="Input Context"
+                      loading={isLoadingIntentContext}
+                      options={optionsContext ?? []}
+                      variant="borderless"
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+              <div className="py-4 w-1/2">
+                <div className="flex mb-2 items-center">
+                  <NumberOutlined type="primary" />
+                  <Form.Item
+                    name="outputContext"
+                    className="w-full"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: '100%' }}
+                      placeholder="Output Context"
+                      loading={isLoadingIntentContext}
+                      options={optionsContext ?? []}
+                      variant="borderless"
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* training phrases & response text */}
         <div className="flex gap-10 my-6">
           <div className="pb-12 w-1/2">
             <div className="flex gap-2 items-center!">

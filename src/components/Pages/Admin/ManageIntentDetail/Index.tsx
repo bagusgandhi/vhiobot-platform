@@ -11,6 +11,7 @@ import {
   message,
   notification,
   Skeleton,
+  Select,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -37,8 +38,24 @@ export default function Index({ intentId, session }: any) {
     mutate,
   } = useSWRFetcher<any>({
     key: [`api/intent/${intentId}`],
-    session
+    session,
   });
+
+  const {
+    data: dataIntentContext,
+    isLoading: isLoadingIntentContext,
+    mutate: isMutateIntentContext,
+  } = useSWRFetcher<any>({
+    key: [`api/intent-context`],
+    session,
+  });
+
+  const optionsContext = dataIntentContext?.data?.map((item: any) => {
+    return {
+      label: item.title,
+      value: item.title
+    }
+  })
 
   const { trigger: saveIntent, isMutating: saveLoading } =
     useSWRMutationFetcher({
@@ -72,25 +89,36 @@ export default function Index({ intentId, session }: any) {
 
   if (dataIntent) {
     formIntent.setFieldValue('displayName', dataIntent?.data.displayName);
+    formIntent.setFieldValue('inputContext', dataIntent?.data.input_context);
+    formIntent.setFieldValue('outputContext', dataIntent?.data.output_context);
   }
 
-  const submitHandler = () => {
-    if(formIntent.getFieldValue('addNewTrainingPhrase') || formIntent.getFieldValue('addNewResponseText')){
+  const submitHandler = (values: any) => {
+    if (
+      formIntent.getFieldValue('addNewTrainingPhrase') ||
+      formIntent.getFieldValue('addNewResponseText')
+    ) {
       messageApi.open({
         type: 'warning',
         content: 'Please click button add in your input first',
       });
-    }else{
-      const displayName = formIntent.getFieldValue('displayName');
+    } else {
+      // const displayName = formIntent.getFieldValue('displayName');
       const updatedData: any = {
         data: {
-          displayName,
+          displayName: values.displayName,
           trainingPhrasesParts: state.trainingPhrases,
           messageTexts: state.responseTexts,
+          inputContext: values.inputContext,
+          outputContext: values.outputContext,
         },
       };
-  
+
+      console.log(updatedData)
+
       saveIntent(updatedData);
+      mutate();
+      isMutateIntentContext()
     }
   };
 
@@ -133,6 +161,87 @@ export default function Index({ intentId, session }: any) {
             </Button>
           </div>
         )}
+
+        {/* context */}
+        <div>
+          <div>
+            {isLoading ? (
+              <Skeleton active={true} />
+            ) : (
+              <>
+                <div className="flex gap-2 items-center!">
+                  <h4 className="text-lg font-semibold">Contexts</h4>
+                  <Tooltip
+                    placement="top"
+                    title={
+                      'Can be used to "remember" parameter values, so they can be passed between intents'
+                    }
+                    arrow={true}
+                  >
+                    <InfoCircleOutlined />
+                  </Tooltip>
+                </div>
+                <p className="text-xs text-gray-600">
+                  contexts are used to manage the flow of conversation by
+                  keeping track of the user's input across multiple turns. They
+                  act like variables that help the chatbot remember what the
+                  user previously said, allowing for more dynamic and
+                  context-aware conversations.
+                </p>
+              </>
+            )}
+
+            <div className="flex gap-10">
+              {isLoading ? (
+                <Skeleton active={true} />
+              ) : (
+                <div className="py-4 w-1/2">
+                  <div className="flex mb-2 items-center">
+                    <NumberOutlined type="primary" />
+                    <Form.Item
+                      name="inputContext"
+                      className="w-full"
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ width: '100%' }}
+                        placeholder="Input Context"
+                        loading={isLoadingIntentContext}
+                        options={optionsContext ?? []}
+                        variant="borderless"
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+              )}
+
+              {isLoading ? (
+                <Skeleton active={true} />
+              ) : (
+                <div className="py-4 w-1/2">
+                  <div className="flex mb-2 items-center">
+                    <NumberOutlined type="primary" />
+                    <Form.Item
+                      name="outputContext"
+                      className="w-full"
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ width: '100%' }}
+                        placeholder="Output Context"
+                        loading={isLoadingIntentContext}
+                        options={optionsContext ?? []}
+                        variant="borderless"
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="flex gap-10 my-6">
           {isLoading ? (
