@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
+import type { Metadata } from 'next';
+import { getServerSession } from 'next-auth';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import "./globals.css";
-import SessionProvider from "@/components/SessionProvider";
+import './globals.css';
+import SessionProvider from '@/components/SessionProvider';
 
 export const metadata: Metadata = {
-  title: "Vhiobot platform",
-  description: "simple chatbot experience",
+  title: 'Vhiobot - Virtual Asisten Hostin',
+  description: 'Virtual Asisten Hosting',
 };
 
 export default async function RootLayout({
@@ -20,9 +20,7 @@ export default async function RootLayout({
     <html>
       <body>
         <SessionProvider session={session}>
-          <AntdRegistry>
-            {children}
-          </AntdRegistry>
+          <AntdRegistry>{children}</AntdRegistry>
         </SessionProvider>
       </body>
     </html>
