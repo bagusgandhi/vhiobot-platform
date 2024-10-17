@@ -109,7 +109,7 @@ export default function Index() {
                 data.sender === 'vhiobot' ? (
                   <div
                     key={index}
-                    className="flex w-full mt-2 space-x-3 max-w-xs"
+                    className={`flex w-full mt-2 space-x-3 max-w-xs ${data?.sender}`}
                   >
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
                     <div>
