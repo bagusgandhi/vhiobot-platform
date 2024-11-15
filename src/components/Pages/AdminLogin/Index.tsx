@@ -9,7 +9,7 @@ export default function index() {
 
   const onFinish = async (values: any) => {
     dispatch({ type: 'set loading', payload: true });
-    await signIn('cred-email-password', { ...values, callbackUrl: '/admin' })
+    await signIn('cred-email-password', { ...values, callbackUrl: '/admin' });
     dispatch({ type: 'set loading', payload: false });
   };
 
@@ -23,42 +23,47 @@ export default function index() {
   type FieldType = {
     email?: string;
     password?: string;
+    style?: any;
   };
 
   return (
     <>
-      <div className='h-screen flex items-center justify-center '>
+      <div className="h-screen flex items-center justify-center ">
         <Form
           name="admin-login"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-          style={{ maxWidth: 600 }}
-          initialValues={{ remember: true }}
+          style={{ maxWidth: '100%' }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
           autoComplete="off"
+          className="!w-1/6"
         >
+          <h3 className="text-3xl font-bold text-center my-4 text-primary p-4 rounded-md">
+            Vhiobot
+          </h3>
           <Form.Item<FieldType>
-            label="Email"
             name="email"
             rules={[
               { required: true, message: 'Please input your email!' },
               { type: 'email', message: 'The input is not valid email!' },
             ]}
           >
-            <Input />
+            <Input placeholder="Email" style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item<FieldType>
-            label="Password"
             name="password"
             rules={[{ required: true, message: 'Please input your password!' }]}
           >
-            <Input.Password />
+            <Input.Password placeholder="Password" style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-            <Button loading={state.loading} type="primary" htmlType="submit">
+          <Form.Item>
+            <Button
+              loading={state.loading}
+              type="primary"
+              className="!bg-primary !w-full"
+              htmlType="submit"
+            >
               Submit
             </Button>
           </Form.Item>
