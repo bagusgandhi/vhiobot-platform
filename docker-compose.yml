@@ -8,6 +8,6 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - 3000:3000
+      - 8082:3000
     env_file:
       - .env.local
